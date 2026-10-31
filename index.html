@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modelo de Flujo Máximo</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background:
+        radial-gradient(
+            ellipse at 15% 5%,
+            rgba(36, 87, 197, 0.22),
+            transparent 38%
+        ),
+        radial-gradient(
+            ellipse at 90% 85%,
+            rgba(19, 122, 82, 0.10),
+            transparent 32%
+        ),
+        linear-gradient(
+            135deg,
+            #0b1224 0%,
+            #172554 48%,
+            #101a32 100%
+        );
+    background-attachment: fixed;
+    color: #172033;
+}
+
+header {
+    background: linear-gradient(120deg, #172554, #2457c5);
+    color: white;
+    padding: 25px;
+    text-align: center;
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.20);
+}
+
+header h1 {
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+}
+
+header p {
+    margin: 6px 0;
+    color: #e8efff;
+}
+
+main {
+    max-width: 1100px;
+    margin: auto;
+    padding: 28px 20px;
+}
+
+.contenedor {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 18px;
+}
+
+.tarjeta {
+    background: rgba(255, 255, 255, 0.97);
+    border: 1px solid rgba(220, 227, 239, 0.9);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 18px;
+    box-shadow: 0 12px 32px rgba(3, 10, 28, 0.18);
+}
+
+h1, h2 {
+    margin-top: 0;
+}
+
+h2 {
+    color: #172554;
+    border-bottom: 2px solid #e8efff;
+    padding-bottom: 10px;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin: 12px 0 6px;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    font-size: 15px;
+    background: #ffffff;
+    color: #172033;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+    border-color: #2457c5;
+    box-shadow: 0 0 0 3px rgba(36, 87, 197, 0.12);
+}
+
+textarea {
+    min-height: 180px;
+    font-family: monospace;
+    resize: vertical;
+}
+
+button {
+    padding: 11px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 12px rgba(23, 37, 84, 0.18);
+}
+
+.calcular {
+    background: #2457c5;
+    color: white;
+    width: 100%;
+}
+
+.calcular:hover {
+    background: #172554;
+}
+
+.ejemplo {
+    background: #e8efff;
+    color: #2457c5;
+    width: 100%;
+}
+
+.ejemplo:hover {
+    background: #d9e5ff;
+}
+
+.resultado {
+    background: #eaf8f1;
+    color: #137a52;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 20px;
+    font-weight: bold;
+    margin: 15px 0;
+    border-left: 4px solid #137a52;
+}
+
+.estadisticas {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.estadistica {
+    background: #f3f6fb;
+    padding: 12px;
+    border-radius: 8px;
+    flex: 1;
+    min-width: 100px;
+    border: 1px solid #e1e8f0;
+}
+
+.estadistica strong {
+    display: block;
+    color: #2457c5;
+    font-size: 23px;
+    margin-top: 5px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+th, td {
+    border-bottom: 1px solid #dce3ef;
+    padding: 10px 6px;
+    text-align: left;
+}
+
+th {
+    background: #f3f6fb;
+    color: #172554;
+}
+
+tbody tr:hover {
+    background: #f3f6ff;
+}
+
+.tabla-contenedor {
+    overflow-x: auto;
+}
+
+.paso {
+    background: #f3f6ff;
+    border-left: 4px solid #2457c5;
+    padding: 12px;
+    margin: 10px 0;
+    line-height: 1.5;
+    border-radius: 0 8px 8px 0;
+}
+
+.error {
+    color: #b42318;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+#grafico {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 15px;
+}
+
+svg {
+    width: 100%;
+    min-height: 320px;
+}
+
+@media (max-width: 800px) {
+    .contenedor {
+        grid-template-columns: 1fr;
+    }
+
+    main {
+        padding: 16px 12px;
+    }
+
+    header {
+        padding: 20px 12px;
+    }
+
+    header h1 {
+        font-size: 24px;
+    }
+
+    .tarjeta {
+        padding: 14px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>MODELO DE FLUJO MÁXIMO</h1>
+    <p>Investigación de Operaciones I</p>
+    <p>Algoritmo de Ford-Fulkerson</p>
+</header>
+
+<main>
+<div class="contenedor">
+
+    <section>
+        <div class="tarjeta">
+            <h2>Ingresar datos</h2>
+
+            <p>
+                Escribe una conexión por línea con el formato:
+                Origen, Destino, Capacidad.
+            </p>
+
+            <label for="conexiones">Conexiones de la red</label>
+
+            <textarea id="conexiones">A,B,10
+A,C,8
+B,C,2
+B,D,5
+B,E,7
+C,D,10
+C,F,6
+D,E,3
+D,F,8
+E,F,10</textarea>
+
+            <label for="origen">Nodo de origen</label>
+            <input id="origen" value="A">
+
+            <label for="destino">Nodo de destino</label>
+            <input id="destino" value="F">
+
+            <button class="calcular" onclick="calcular()">
+                Calcular flujo máximo
+            </button>
+
+            <button class="ejemplo" onclick="cargarEjemplo()">
+                Cargar ejemplo
+            </button>
+
+            <div id="error" class="error"></div>
+        </div>
+
+        <div class="tarjeta">
+            <h2>Conceptos principales</h2>
+            <p><b>Origen:</b> punto donde comienza el flujo.</p>
+            <p><b>Destino:</b> punto al que debe llegar el flujo.</p>
+            <p><b>Capacidad:</b> cantidad máxima permitida por conexión.</p>
+            <p><b>Flujo máximo:</b> cantidad máxima que puede llegar al destino.</p>
+        </div>
+    </section>
+
+    <section>
+        <div class="tarjeta">
+            <h2>Red de transporte</h2>
+
+            <div class="estadisticas">
+                <div class="estadistica">
+                    Flujo máximo
+                    <strong id="flujoMaximo">0</strong>
+                </div>
+
+                <div class="estadistica">
+                    Nodos
+                    <strong id="cantidadNodos">0</strong>
+                </div>
+
+                <div class="estadistica">
+                    Conexiones
+                    <strong id="cantidadConexiones">0</strong>
+                </div>
+            </div>
+
+            <div id="grafico"></div>
+
+            <div id="resultado" class="resultado">
+                Ingresa los datos y calcula el flujo.
+            </div>
+        </div>
+
+        <div class="tarjeta">
+            <h2>Flujo por conexión</h2>
+
+            <div class="tabla-contenedor">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Origen</th>
+                            <th>Destino</th>
+                            <th>Flujo</th>
+                            <th>Capacidad</th>
+                            <th>Disponible</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaResultados"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="tarjeta">
+            <h2>Procedimiento paso a paso</h2>
+            <div id="procedimiento"></div>
+        </div>
+    </section>
+
+</div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const ejemplo = `A,B,10
+A,C,8
+B,C,2
+B,D,5
+B,E,7
+C,D,10
+C,F,6
+D,E,3
+D,F,8
+E,F,10`;
+
+function leerDatos() {
+    const lineas = $("conexiones").value
+        .split("\n")
+        .map(x => x.trim())
+        .filter(Boolean);
+
+    const aristas = [];
+
+    lineas.forEach((linea, i) => {
+        const partes = linea.split(/[,\t;]+/)
+            .map(x => x.trim());
+
+        if (partes.length !== 3) {
+            throw new Error(
+                `La línea ${i + 1} debe tener origen, destino y capacidad.`
+            );
+        }
+
+        const [u, v, valor] = partes;
+        const capacidad = Number(valor);
+
+        if (!u || !v || u === v) {
+            throw new Error(`Revisa los nodos de la línea ${i + 1}.`);
+        }
+
+        if (!Number.isFinite(capacidad) || capacidad < 0) {
+            throw new Error(
+                `La capacidad de la línea ${i + 1} debe ser un número no negativo.`
+            );
+        }
+
+        aristas.push({
+            u,
+            v,
+            capacidad,
+            flujo: 0
+        });
+    });
+
+    const origen = $("origen").value.trim();
+    const destino = $("destino").value.trim();
+
+    if (!aristas.length) {
+        throw new Error("Ingresa al menos una conexión.");
+    }
+
+    if (!origen || !destino || origen === destino) {
+        throw new Error("Indica un origen y un destino diferentes.");
+    }
+
+    const nodos = [...new Set(
+        aristas.flatMap(a => [a.u, a.v])
+    )];
+
+    if (!nodos.includes(origen) || !nodos.includes(destino)) {
+        throw new Error(
+            "El origen y el destino deben aparecer en las conexiones."
+        );
+    }
+
+    return { aristas, nodos, origen, destino };
+}
+
+function fordFulkerson(datos) {
+    const { aristas, nodos, origen, destino } = datos;
+
+    const grafo = new Map(
+        nodos.map(n => [n, []])
+    );
+
+    // Crear aristas directas y aristas residuales.
+    aristas.forEach((a, indice) => {
+        const directa = {
+            hasta: a.v,
+            capacidad: a.capacidad,
+            flujo: 0,
+            indice,
+            inversa: null
+        };
+
+        const inversa = {
+            hasta: a.u,
+            capacidad: 0,
+            flujo: 0,
+            indice,
+            inversa: directa
+        };
+
+        directa.inversa = inversa;
+
+        grafo.get(a.u).push(directa);
+        grafo.get(a.v).push(inversa);
+    });
+
+    let flujoTotal = 0;
+    const pasos = [];
+
+    while (true) {
+        const padre = new Map();
+        const cola = [origen];
+
+        padre.set(origen, null);
+
+        // Buscar un camino usando BFS.
+        for (
+            let i = 0;
+            i < cola.length && !padre.has(destino);
+            i++
+        ) {
+            const actual = cola[i];
+
+            for (const arista of grafo.get(actual)) {
+                const residual =
+                    arista.capacidad - arista.flujo;
+
+                if (
+                    residual > 0 &&
+                    !padre.has(arista.hasta)
+                ) {
+                    padre.set(arista.hasta, {
+                        nodo: actual,
+                        arista
+                    });
+
+                    cola.push(arista.hasta);
+
+                    if (arista.hasta === destino) {
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Si no se llega al destino, termina el algoritmo.
+        if (!padre.has(destino)) {
+            break;
+        }
+
+        // Encontrar la capacidad mínima del camino.
+        let aumento = Infinity;
+        let actual = destino;
+        const camino = [];
+
+        while (actual !== origen) {
+            const p = padre.get(actual);
+
+            aumento = Math.min(
+                aumento,
+                p.arista.capacidad - p.arista.flujo
+            );
+
+            camino.unshift(
+                `${p.nodo} → ${actual}`
+            );
+
+            actual = p.nodo;
+        }
+
+        // Actualizar el flujo y la red residual.
+        actual = destino;
+
+        while (actual !== origen) {
+            const p = padre.get(actual);
+            const arista = p.arista;
+
+            arista.flujo += aumento;
+            arista.inversa.flujo -= aumento;
+
+            actual = p.nodo;
+        }
+
+        flujoTotal += aumento;
+
+        pasos.push({
+            camino,
+            aumento,
+            acumulado: flujoTotal
+        });
+    }
+
+    // Recuperar el flujo final de cada conexión original.
+    aristas.forEach((a, indice) => {
+        let flujo = 0;
+
+        for (const arco of grafo.get(a.u)) {
+            if (arco.indice === indice && arco.hasta === a.v) {
+                flujo = arco.flujo;
+                break;
+            }
+        }
+
+        a.flujo = Math.max(0, flujo);
+    });
+
+    return { flujoTotal, pasos };
+}
+
+function dibujarGrafico(datos) {
+    const { aristas, nodos, origen, destino } = datos;
+
+    const resultado = $("grafico");
+    resultado.innerHTML = "";
+
+    const ancho = 700;
+    const alto = 350;
+    const cx = ancho / 2;
+    const cy = alto / 2;
+    const rx = 260;
+    const ry = 125;
+
+    const posiciones = {};
+
+    nodos.forEach((nodo, i) => {
+        const angulo =
+            -Math.PI / 2 + (2 * Math.PI * i / nodos.length);
+
+        posiciones[nodo] = {
+            x: cx + rx * Math.cos(angulo),
+            y: cy + ry * Math.sin(angulo)
+        };
+    });
+
+    const svg = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "svg"
+    );
+
+    svg.setAttribute("viewBox", `0 0 ${ancho} ${alto}`);
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", "Gráfico de la red de flujo");
+
+    const defs = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "defs"
+    );
+
+    const marcador = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "marker"
+    );
+
+    marcador.setAttribute("id", "flecha");
+    marcador.setAttribute("markerWidth", "8");
+    marcador.setAttribute("markerHeight", "8");
+    marcador.setAttribute("refX", "7");
+    marcador.setAttribute("refY", "3");
+    marcador.setAttribute("orient", "auto");
+
+    const punta = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "path"
+    );
+
+    punta.setAttribute("d", "M0,0 L0,6 L7,3 z");
+    punta.setAttribute("fill", "#667085");
+
+    marcador.appendChild(punta);
+    defs.appendChild(marcador);
+    svg.appendChild(defs);
+
+    function elemento(tipo, atributos, texto) {
+        const e = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            tipo
+        );
+
+        Object.entries(atributos).forEach(([k, v]) => {
+            e.setAttribute(k, v);
+        });
+
+        if (texto !== undefined) {
+            e.textContent = texto;
+        }
+
+        svg.appendChild(e);
+        return e;
+    }
+
+    aristas.forEach(a => {
+        const p1 = posiciones[a.u];
+        const p2 = posiciones[a.v];
+
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const longitud = Math.hypot(dx, dy) || 1;
+
+        const x1 = p1.x + dx / longitud * 23;
+        const y1 = p1.y + dy / longitud * 23;
+        const x2 = p2.x - dx / longitud * 27;
+        const y2 = p2.y - dy / longitud * 27;
+
+        elemento("line", {
+            x1, y1, x2, y2,
+            stroke: a.flujo > 0 ? "#2457c5" : "#aab5c5",
+            "stroke-width": a.flujo > 0 ? 3 : 1.5,
+            "marker-end": "url(#flecha)"
+        });
+
+        elemento("text", {
+            x: (x1 + x2) / 2,
+            y: (y1 + y2) / 2 - 7,
+            "text-anchor": "middle",
+            fill: "#172033",
+            stroke: "white",
+            "stroke-width": 3,
+            "paint-order": "stroke",
+            "font-size": 12,
+            "font-weight": "bold"
+        }, `${a.flujo}/${a.capacidad}`);
+    });
+
+    nodos.forEach(nodo => {
+        const p = posiciones[nodo];
+
+        let color = "#e8efff";
+        let borde = "#2457c5";
+
+        if (nodo === origen) {
+            color = "#d9f7e8";
+            borde = "#137a52";
+        }
+
+        if (nodo === destino) {
+            color = "#ffedd5";
+            borde = "#b65c11";
+        }
+
+        elemento("circle", {
+            cx: p.x,
+            cy: p.y,
+            r: 22,
+            fill: color,
+            stroke: borde,
+            "stroke-width": 2
+        });
+
+        elemento("text", {
+            x: p.x,
+            y: p.y + 5,
+            "text-anchor": "middle",
+            fill: "#172033",
+            "font-size": 14,
+            "font-weight": "bold"
+        }, nodo);
+    });
+
+    resultado.appendChild(svg);
+}
+
+function escapar(texto) {
+    return String(texto).replace(/[&<>"']/g, caracter => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[caracter]);
+}
+
+function calcular() {
+    $("error").textContent = "";
+
+    try {
+        const datos = leerDatos();
+        const solucion = fordFulkerson(datos);
+
+        $("flujoMaximo").textContent = solucion.flujoTotal;
+        $("cantidadNodos").textContent = datos.nodos.length;
+        $("cantidadConexiones").textContent = datos.aristas.length;
+
+        $("resultado").textContent =
+            `El flujo máximo desde ${datos.origen} hasta ${datos.destino} es ${solucion.flujoTotal} unidades.`;
+
+        $("tablaResultados").innerHTML =
+            datos.aristas.map(a => `
+                <tr>
+                    <td>${escapar(a.u)}</td>
+                    <td>${escapar(a.v)}</td>
+                    <td>${a.flujo}</td>
+                    <td>${a.capacidad}</td>
+                    <td>${a.capacidad - a.flujo}</td>
+                </tr>
+            `).join("");
+
+        if (solucion.pasos.length === 0) {
+            $("procedimiento").innerHTML =
+                "<p>No se encontraron caminos de aumento. El flujo máximo es 0.</p>";
+        } else {
+            $("procedimiento").innerHTML =
+                solucion.pasos.map((p, i) => `
+                    <div class="paso">
+                        <b>Iteración ${i + 1}</b><br>
+                        Camino encontrado: ${p.camino.join(" → ")}<br>
+                        Aumento del flujo: ${p.aumento} unidades.<br>
+                        Flujo acumulado: ${p.acumulado} unidades.
+                    </div>
+                `).join("");
+        }
+
+        $("procedimiento").innerHTML += `
+            <div class="paso">
+                <b>Conclusión:</b> no existen más caminos de aumento
+                disponibles. Por lo tanto, el flujo máximo es
+                ${solucion.flujoTotal} unidades.
+            </div>
+        `;
+
+        dibujarGrafico(datos);
+
+    } catch (error) {
+        $("error").textContent = error.message;
+    }
+}
+
+function cargarEjemplo() {
+    $("conexiones").value = ejemplo;
+    $("origen").value = "A";
+    $("destino").value = "F";
+    calcular();
+}
+
+// Mostrar automáticamente el ejemplo al abrir la aplicación.
+calcular();
+</script>
+
+</body>
+</html>
